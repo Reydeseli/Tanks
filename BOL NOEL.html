@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SRS Tank Placement Visualizer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: #1A2526;
+      color: #FFFFFF;
+      text-align: center;
+      padding: 15px;
+      margin: 0;
+    }
+    h3 {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+    .set {
+      margin: 20px auto;
+      padding: 15px;
+      background: linear-gradient(135deg, #2E3B3E, #3A4A4D);
+      width: 95%;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .set h4 {
+      font-size: 16px;
+      font-weight: 500;
+      margin: 0 0 10px;
+      color: #B0BEC5;
+    }
+    .tank-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 15px;
+    }
+    .tank {
+      width: 60px;
+      height: 100px;
+      color: #FFFFFF;
+      border-radius: 8px;
+      margin: 0 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      animation: fadeInScale 0.3s ease-out;
+    }
+    .FT { background: #1976D2; } /* Azul SRS */
+    .AT { background: #43A047; }
+    .GB { background: #1976D2; border: 3px dashed #FF8F00; } /* Azul SRS con borde naranja */
+    .line {
+      width: 30px;
+      border-top: 8px dashed #B0BEC5; /* Más gruesa */
+      margin-bottom: -70px;
+      cursor: pointer;
+      position: relative;
+      transition: opacity 0.3s ease;
+    }
+    .line.disconnected { border-color: transparent; opacity: 0; }
+    .line::after { /* Texto debajo de la manguera */
+      content: attr(data-extras);
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: #FFFFFF;
+      white-space: nowrap;
+    }
+    .menu {
+      position: absolute;
+      top: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #37474F;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      z-index: 100;
+      padding: 8px;
+      font-size: 12px;
+      color: #FFFFFF;
+      animation: slideDown 0.2s ease;
+    }
+    button {
+      margin: 4px;
+      font-size: 12px;
+      padding: 8px 12px;
+      background: #1976D2; /* Azul SRS */
+      color: #FFFFFF;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    button:hover {
+      background: #2196F3; /* Azul más claro */
+      transform: scale(1.05);
+    }
+    .info input, .info textarea {
+      width: 90%;
+      max-width: 300px;
+      margin: 8px 0;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #37474F;
+      color: #FFFFFF;
+      font-family: 'Roboto', sans-serif;
+    }
+    .info textarea { resize: vertical; }
+    select, input[type="number"] {
+      padding: 8px;
+      border-radius: 6px;
+      background: #37474F;
+      color: #FFFFFF;
+      border: none;
+    }
+
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<h3>SRS Tank Placement Visualizer</h3>
+<div>
+  <label>Sets:
+    <select id="numSets"><option value="1">1</option><option value="2">2</option></select>
+  </label>
+  <button onclick="generate()">Generate</button>
+</div>
+
+<div id="sets"></div>
+
+<div class="info">
+  <input placeholder="Company Man" id="companyMan">
+  <input placeholder="Location" id="location">
+  <input type="datetime-local" id="dateTime"><br><br>
+  <textarea placeholder="Notes" id="notes" rows="4" cols="40"></textarea><br>
+  <button onclick="window.print()">Generate BOL (Print/PDF)</button>
+</div>
+
+<script>
+  function generate(){sets.innerHTML='';for(let i=1;i<=numSets.value;i++) createSet(i);}
+  function createSet(num){
+    let div=document.createElement('div');div.className='set';
+    div.innerHTML=`<h4>Set ${num}</h4><label>Tanks: <input type='number' min='1' max='10' value='3' onchange='render(${num},this.value)'></label><div class='tank-row' id='row${num}'></div>`;
+    sets.append(div);render(num,3);
+  }
+  function render(set,qty){
+    let row=document.getElementById('row'+set);row.innerHTML='';
+    for(let i=0;i<qty;i++){
+      let t=document.createElement('div');t.className='tank FT';t.dataset.baseType='FT';t.textContent='FT';t.onclick=(e)=>tankMenu(e,t,i,qty);row.append(t);
+      if(i<qty-1){let l=document.createElement('div');l.className='line';l.onclick=(e)=>lineMenu(e,l);row.append(l);}
+    }
+  }
+  function tankMenu(e,tank,index,total){
+    e.stopPropagation();closeMenus();
+    let extra=(isTankEndpoint(index,total))?`<button onclick="addExtra(this,'SV')">SV</button><button onclick="addExtra(this,'T')">T</button><button onclick="clearExtra(this)">Clear</button>`:'';
+    let m=document.createElement('div');m.className='menu';
+    m.innerHTML=`<button onclick="setTank(this,'FT')">FT</button><button onclick="setTank(this,'AT')">AT</button><button onclick="setTank(this,'GB')">GB</button>${extra}`;
+    tank.append(m);
+  }
+  function isTankEndpoint(index,total){
+    let row=document.querySelector('.tank-row');
+    let lines=row.querySelectorAll('.line');
+    if(index==0 || index==total-1) return true;
+    if(lines[index-1].classList.contains('disconnected')) return true;
+    for(let i=index; i<lines.length; i++) {
+      if(!lines[i].classList.contains('disconnected')) return false;
+    }
+    return true;
+  }
+  function lineMenu(e,line){
+    e.stopPropagation();closeMenus();
+    let conn=line.classList.contains('disconnected')?
+    `<button onclick="connect(this)">Connect tank</button>`:
+    `<button onclick="disconnect(this)">Disconnect</button><button onclick="addExtra(this,'SV')">SV</button><button onclick="addExtra(this,'T')">T</button><button onclick="clearExtra(this)">Clear</button>`;
+    let m=document.createElement('div');m.className='menu';m.innerHTML=conn;line.append(m);
+  }
+  function setTank(el,type){
+    let tank=el.closest('.tank');tank.className='tank '+type;tank.dataset.baseType=type;updateLabel(tank);closeMenus();
+  }
+  function disconnect(el){
+    let line=el.closest('.line');line.classList.add('disconnected');clearExtra(el);closeMenus();
+  }
+  function connect(el){
+    let line=el.closest('.line');line.classList.remove('disconnected');closeMenus();
+  }
+  function addExtra(el,type){
+    let parent=el.closest('.tank,.line');let extras=parent.dataset.extras?parent.dataset.extras.split(','):[];
+    if(!extras.includes(type)){extras.push(type);}
+    parent.dataset.extras=extras.join(',');updateLabel(parent);closeMenus();
+  }
+  function clearExtra(el){
+    let parent=el.closest('.tank,.line');delete parent.dataset.extras;updateLabel(parent);closeMenus();
+  }
+  function updateLabel(el){
+    if(el.classList.contains('tank')){
+      let base=el.dataset.baseType||'FT';let extras=el.dataset.extras?el.dataset.extras.split(',').join(', '):'';
+      el.textContent=base+(extras?' ('+extras+')':''); 
+    } else if(el.classList.contains('line')) {
+      let extras=el.dataset.extras?el.dataset.extras.split(',').join(', '):'';
+      el.setAttribute('data-extras', extras); /* Actualiza el texto debajo */
+    }
+  }
+  function closeMenus(){document.querySelectorAll('.menu').forEach(m=>m.remove());}
+  document.onclick=closeMenus;generate();
+</script>
+</body>
+</html>
